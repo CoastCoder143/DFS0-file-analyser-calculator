@@ -16,12 +16,12 @@ import mikeio
 class DFS0Analyzer:
     """Analyzer for DFS0 files with SSC concentration analysis capabilities."""
     
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: Optional[str] = None):
         """
         Initialize the DFS0 Analyzer.
         
         Args:
-            filepath: Path to the DFS0 file
+            filepath: Path to the DFS0 file (optional for testing/mock data)
         """
         self.filepath = filepath
         self.dfs0 = None
@@ -30,6 +30,8 @@ class DFS0Analyzer:
         
     def load_file(self):
         """Load the DFS0 file and extract data."""
+        if self.filepath is None:
+            raise ValueError("Cannot load file: filepath not provided")
         self.dfs0 = mikeio.read(self.filepath)
         self.data = self.dfs0
         self.timesteps = self.dfs0.time

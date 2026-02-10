@@ -36,7 +36,7 @@ def example_basic_usage():
         def __getitem__(self, key):
             return self.items[key]
     
-    analyzer = DFS0Analyzer.__new__(DFS0Analyzer)
+    analyzer = DFS0Analyzer()
     analyzer.data = MockData()
     analyzer.timesteps = analyzer.data.time
     
@@ -87,7 +87,7 @@ def example_with_scaling():
         def __getitem__(self, key):
             return self.items[key]
     
-    analyzer = DFS0Analyzer.__new__(DFS0Analyzer)
+    analyzer = DFS0Analyzer()
     analyzer.data = MockData()
     analyzer.timesteps = analyzer.data.time
     
@@ -137,7 +137,7 @@ def example_subset_analysis():
         def __getitem__(self, key):
             return self.items[key]
     
-    analyzer = DFS0Analyzer.__new__(DFS0Analyzer)
+    analyzer = DFS0Analyzer()
     analyzer.data = MockData()
     analyzer.timesteps = analyzer.data.time
     
@@ -193,7 +193,7 @@ def example_multiple_thresholds():
         def __getitem__(self, key):
             return self.items[key]
     
-    analyzer = DFS0Analyzer.__new__(DFS0Analyzer)
+    analyzer = DFS0Analyzer()
     analyzer.data = MockData()
     analyzer.timesteps = analyzer.data.time
     

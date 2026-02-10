@@ -23,8 +23,8 @@ def test_exceedance_percentage():
     # Create test data
     values = np.array([50, 100, 150, 200, 75, 125, 80, 110])
     
-    # Create analyzer instance (without loading a file)
-    analyzer = DFS0Analyzer.__new__(DFS0Analyzer)
+    # Create analyzer instance without filepath (for testing)
+    analyzer = DFS0Analyzer()
     
     # Test 1: 50% should exceed 100
     result = analyzer.calculate_exceedance_percentage(values, threshold=100.0)
@@ -81,7 +81,7 @@ def test_scaling_calculation():
             return self.items[key]
     
     # Create analyzer with mock data
-    analyzer = DFS0Analyzer.__new__(DFS0Analyzer)
+    analyzer = DFS0Analyzer()
     analyzer.data = MockData()
     analyzer.timesteps = analyzer.data.time
     
@@ -142,7 +142,7 @@ def test_integrated_analysis():
             return self.items[key]
     
     # Create analyzer with mock data
-    analyzer = DFS0Analyzer.__new__(DFS0Analyzer)
+    analyzer = DFS0Analyzer()
     analyzer.data = MockData()
     analyzer.timesteps = analyzer.data.time
     
@@ -184,7 +184,7 @@ def test_edge_cases():
     """Test edge cases and error handling."""
     print("Testing edge cases...")
     
-    analyzer = DFS0Analyzer.__new__(DFS0Analyzer)
+    analyzer = DFS0Analyzer()
     
     # Test 1: All values below threshold (0% exceedance)
     values = np.array([10, 20, 30, 40, 50])

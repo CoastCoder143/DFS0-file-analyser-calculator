@@ -182,19 +182,34 @@ Perform complete SSC analysis.
 
 ## Testing
 
-To verify the installation and basic functionality:
+The project includes a comprehensive test suite to verify functionality:
 
-```python
-# Create a simple test
-from dfs0_analyzer import DFS0Analyzer
-import numpy as np
-
-# Test the calculation logic (without requiring a DFS0 file)
-values = np.array([50, 100, 150, 200, 75, 125])
-analyzer = DFS0Analyzer.__new__(DFS0Analyzer)
-result = analyzer.calculate_exceedance_percentage(values, threshold=100.0)
-print(f"Test result: {result['percentage']}% exceeded") # Should be 50%
+```bash
+# Run all tests
+python test_dfs0_analyzer.py
 ```
+
+The test suite covers:
+- Exceedance percentage calculations
+- Scaling factor logic with single and multiple items
+- Integrated analysis workflow
+- Edge cases (0% and 100% exceedance, single values)
+
+All tests use mock data, so no actual DFS0 file is required.
+
+### Example Demonstrations
+
+Run the example script to see the analyzer in action:
+
+```bash
+python example_usage.py
+```
+
+This demonstrates:
+- Basic SSC analysis
+- Analysis with scaling factors
+- Analyzing specific time ranges
+- Testing multiple thresholds
 
 ## License
 

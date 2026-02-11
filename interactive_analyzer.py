@@ -28,6 +28,16 @@ class InteractiveDFS0Analyzer:
         self.analyzers = []   # List of DFS0Analyzer instances
         self.thresholds = [5.0, 10.0, 25.0]  # mg/l thresholds
         
+        # Define expected timesteps per day for each series type
+        self.expected_timesteps = {
+            'V': 73,   # V1-V4 series: 73 timesteps per day
+            'IT': 144  # IT1-IT7 series: 144 timesteps per day
+        }
+        
+        # Define column order for output
+        self.column_order = ['Date', 'V1', 'V2', 'V3', 'V4', 
+                            'IT1', 'IT2', 'IT3', 'IT4', 'IT5', 'IT6', 'IT7']
+        
     def get_file_paths(self) -> List[str]:
         """
         Interactively get UNC file paths from the user.
@@ -244,6 +254,114 @@ class InteractiveDFS0Analyzer:
         print("✓ Tables generated successfully")
         return tables
     
+    def generate_daily_exceedance_tables(self) -> Dict[float, pd.DataFrame]:
+        """
+        Generate daily exceedance percentage tables.
+        
+        Each table shows:
+        - Rows: Calendar days (one row per date)
+        - Columns: Date | V1 | V2 | V3 | V4 | IT1 | IT2 | IT3 | IT4 | IT5 | IT6 | IT7
+        - Cells: Percentage of that day's timesteps where value exceeded threshold
+        
+        Returns:
+            Dictionary mapping threshold to DataFrame with daily exceedance percentages
+        """
+        if not self.analyzers:
+            raise ValueError("No files loaded")
+        
+        print("\n" + "="*70)
+        print("Generating Daily Exceedance Tables...")
+        print("-"*70)
+        
+        # Create results dictionary for each threshold
+        results = {threshold: {} for threshold in self.thresholds}
+        
+        # Process each file
+        for file_idx, (analyzer, (filepath, scale)) in enumerate(zip(self.analyzers, self.files_data), 1):
+            filename = os.path.basename(filepath)
+            print(f"Processing file {file_idx}: {filename}")
+            
+            # Get all item names (series) from this file
+            item_names = analyzer.get_item_names()
+            timestamps = analyzer.timesteps
+            
+            for item_name in item_names:
+                # Get data for this series
+                data = analyzer.get_item_data(item_name) * scale
+                
+                # Determine series type and expected timesteps per day
+                series_prefix = item_name.split('_')[0] if '_' in item_name else item_name
+                
+                # Map to V or IT series
+                # Assuming item names follow patterns like "V1", "V2", "IT1", "IT2", etc.
+                # or with prefixes like "Receptor_1" -> map to V1, etc.
+                series_name = item_name
+                
+                # Create a DataFrame with timestamps and data
+                df_series = pd.DataFrame({
+                    'timestamp': timestamps,
+                    'value': data
+                })
+                
+                # Extract date from timestamp
+                df_series['date'] = pd.to_datetime(df_series['timestamp']).dt.date
+                
+                # For each threshold, calculate daily exceedance percentages
+                for threshold in self.thresholds:
+                    df_series['exceeds'] = df_series['value'] > threshold
+                    
+                    # Group by date and calculate percentage
+                    daily_stats = df_series.groupby('date').agg({
+                        'exceeds': ['sum', 'count']
+                    })
+                    
+                    # Flatten column names
+                    daily_stats.columns = ['_'.join(col).strip('_') for col in daily_stats.columns.values]
+                    
+                    # Calculate percentage
+                    daily_stats['percentage'] = (daily_stats['exceeds_sum'] / daily_stats['exceeds_count'] * 100).round(0)
+                    
+                    # Store results with series name
+                    if series_name not in results[threshold]:
+                        results[threshold][series_name] = daily_stats['percentage']
+        
+        # Convert to DataFrames with proper structure
+        tables = {}
+        for threshold in self.thresholds:
+            if results[threshold]:
+                # Create DataFrame from results
+                df = pd.DataFrame(results[threshold])
+                
+                # Reset index to make date a column
+                df.reset_index(inplace=True)
+                
+                # The first column after reset_index should be the date
+                # Rename it to 'Date'
+                if 'index' in df.columns:
+                    df.rename(columns={'index': 'Date'}, inplace=True)
+                elif df.columns[0] != 'Date':
+                    # First column is the date column
+                    df.rename(columns={df.columns[0]: 'Date'}, inplace=True)
+                
+                # Format date column
+                if 'Date' in df.columns:
+                    df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%d/%m/%Y')
+                
+                # Reorder columns if they match expected pattern
+                available_cols = [col for col in self.column_order if col in df.columns or col == 'Date']
+                if len(available_cols) > 1:  # At least Date + one series
+                    df = df[available_cols]
+                
+                # Convert percentages to integers
+                for col in df.columns:
+                    if col != 'Date':
+                        df[col] = df[col].astype(int)
+                
+                tables[threshold] = df
+        
+        print("✓ Daily tables generated successfully")
+        return tables
+    
     def display_tables(self, tables: Dict[float, pd.DataFrame], show_full: bool = False):
         """
         Display the exceedance tables.
@@ -283,6 +401,50 @@ class InteractiveDFS0Analyzer:
                     print(df.tail(10).to_string())
                 else:
                     print(df.to_string())
+            
+            print("\n" + "="*100)
+    
+    def display_daily_tables(self, tables: Dict[float, pd.DataFrame]):
+        """
+        Display daily exceedance percentage tables.
+        
+        Args:
+            tables: Dictionary mapping threshold to DataFrame with daily percentages
+        """
+        for threshold, df in tables.items():
+            print("\n" + "="*100)
+            print(f"DAILY EXCEEDANCE TABLE: Threshold = {threshold} mg/l")
+            print("="*100)
+            print("Each cell shows the percentage of that day's timesteps exceeding the threshold")
+            print("-"*100)
+            
+            # Display the full table
+            if len(df) > 0:
+                # Show table with better formatting
+                pd.set_option('display.max_columns', None)
+                pd.set_option('display.width', None)
+                pd.set_option('display.max_colwidth', None)
+                
+                if len(df) > 20:
+                    print("\nFirst 10 days:")
+                    print(df.head(10).to_string(index=False))
+                    print(f"\n... ({len(df) - 20} days omitted) ...\n")
+                    print("Last 10 days:")
+                    print(df.tail(10).to_string(index=False))
+                else:
+                    print(df.to_string(index=False))
+                
+                # Show summary statistics
+                print("\n" + "-"*100)
+                print("Summary Statistics:")
+                for col in df.columns:
+                    if col != 'Date':
+                        mean_pct = df[col].mean()
+                        max_pct = df[col].max()
+                        days_exceeded = (df[col] > 0).sum()
+                        print(f"  {col}: Mean={mean_pct:.1f}%, Max={max_pct:.0f}%, Days with exceedance={days_exceeded}")
+            else:
+                print("No data available")
             
             print("\n" + "="*100)
     
@@ -339,19 +501,44 @@ class InteractiveDFS0Analyzer:
                         break
                     continue
                 
-                # Step 5: Generate tables
-                tables = self.generate_exceedance_tables()
-                
-                # Step 6: Display tables (summary by default)
+                # Step 5: Ask user which table format they want
                 print("\n" + "="*70)
-                print("RESULTS - Exceedance Summary")
+                print("TABLE FORMAT OPTIONS")
                 print("="*70)
-                self.display_tables(tables, show_full=False)
+                print("1. Daily Exceedance Percentages (NEW)")
+                print("   - One row per calendar day")
+                print("   - Shows % of timesteps exceeding threshold each day")
+                print("   - Columns: Date | V1 | V2 | V3 | V4 | IT1-IT7")
+                print("\n2. Timestep Summary (Original)")
+                print("   - Summary of exceedance counts across all timesteps")
+                print("="*70)
                 
-                # Ask if user wants to see full tables
-                show_full = input("\nShow full tables? (y/n): ").strip().lower()
-                if show_full == 'y':
-                    self.display_tables(tables, show_full=True)
+                format_choice = input("\nChoose format (1 or 2, default=1): ").strip()
+                if not format_choice:
+                    format_choice = '1'
+                
+                if format_choice == '1':
+                    # Generate and display daily tables
+                    tables = self.generate_daily_exceedance_tables()
+                    
+                    print("\n" + "="*70)
+                    print("RESULTS - Daily Exceedance Percentages")
+                    print("="*70)
+                    self.display_daily_tables(tables)
+                else:
+                    # Generate tables (original format)
+                    tables = self.generate_exceedance_tables()
+                    
+                    # Display tables (summary by default)
+                    print("\n" + "="*70)
+                    print("RESULTS - Exceedance Summary")
+                    print("="*70)
+                    self.display_tables(tables, show_full=False)
+                    
+                    # Ask if user wants to see full tables
+                    show_full = input("\nShow full tables? (y/n): ").strip().lower()
+                    if show_full == 'y':
+                        self.display_tables(tables, show_full=True)
                 
                 # Ask to save to CSV
                 save_option = input("\nSave tables to CSV files? (y/n): ").strip().lower()

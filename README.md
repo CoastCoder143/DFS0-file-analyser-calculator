@@ -4,6 +4,7 @@ A Python tool for analyzing DFS0 files (DHI MIKE format) with a focus on Suspend
 
 ## Features
 
+### Core Analysis Features
 - **DFS0 File Reading**: Load and parse DFS0 files using the mikeio library
 - **Multi-item Summation**: Combine multiple data items from the DFS0 file
 - **Scaling Multipliers**: Apply scaling factors to each item before summation
@@ -11,6 +12,16 @@ A Python tool for analyzing DFS0 files (DHI MIKE format) with a focus on Suspend
 - **Flexible Time Range**: Analyze specific time ranges (e.g., first 1440 timesteps)
 - **Command-Line Interface**: Easy-to-use CLI for quick analysis
 - **Python API**: Programmatic access for integration into other workflows
+
+### NEW: Interactive Multi-Receptor Analysis
+- **Interactive Mode**: User-friendly interface for analyzing multiple DFS0 files
+- **UNC Path Support**: Enter multiple file paths interactively
+- **Custom Scaling**: Apply individual scaling factors to each file (e.g., "1: 1.4")
+- **Multi-Receptor Tables**: Generate tables with dates vs receptors (columns from DFS0)
+- **Multiple Thresholds**: Automatic tables for 5mg/l, 10mg/l, and 25mg/l
+- **CSV Export**: Save exceedance tables for Excel or further analysis
+
+👉 **For the interactive analyzer, see [INTERACTIVE_GUIDE.md](INTERACTIVE_GUIDE.md)**
 
 ## Installation
 
@@ -28,6 +39,23 @@ pip install -r requirements.txt
 This will install:
 - `mikeio` - Library for reading DHI MIKE files
 - `numpy` - Numerical computing library
+- `pandas` - Table formatting and CSV export
+
+## Quick Start
+
+### Interactive Mode (Recommended for Multi-Receptor Analysis)
+
+```bash
+python interactive_analyzer.py
+```
+
+Follow the interactive prompts to:
+1. Enter UNC file paths for all DFS0 locations
+2. Set scaling factors for each file
+3. Generate exceedance tables for 5, 10, and 25 mg/l thresholds
+4. Save results to CSV
+
+**See [INTERACTIVE_GUIDE.md](INTERACTIVE_GUIDE.md) for detailed instructions.**
 
 ## Usage
 

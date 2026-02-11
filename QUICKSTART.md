@@ -1,7 +1,10 @@
 # DFS0 File Analyzer - Quick Start Guide
 
 ## Overview
-This tool analyzes DFS0 files (DHI MIKE format) for Suspended Sediment Concentration (SSC) analysis. It performs timestep-to-timestep addition with optional scaling multipliers and calculates the percentage of time concentrations exceed specified thresholds.
+This tool analyzes DFS0 files (DHI MIKE format) for Suspended Sediment Concentration (SSC) analysis. It provides two modes:
+
+1. **Interactive Mode**: Multi-receptor analysis with exceedance tables (NEW!)
+2. **Command-Line Mode**: Single-file analysis with statistics
 
 ## Installation
 
@@ -9,7 +12,34 @@ This tool analyzes DFS0 files (DHI MIKE format) for Suspended Sediment Concentra
 pip install -r requirements.txt
 ```
 
-## Quick Usage Examples
+## Interactive Mode (Multi-Receptor Analysis)
+
+For analyzing multiple DFS0 files with exceedance tables:
+
+```bash
+python interactive_analyzer.py
+```
+
+**What it does:**
+- Asks for multiple UNC file paths
+- Lets you set scaling factors (e.g., "1: 1.4" for file 1 with scale 1.4)
+- Generates tables showing dates vs receptors
+- Creates separate tables for 5mg/l, 10mg/l, and 25mg/l thresholds
+- Exports to CSV files
+
+**Example Output Table:**
+```
+Date/Time            File1_Receptor_1  File1_Receptor_2  File2_Receptor_1
+2024-01-01 00:00:00  X                 X                 -
+2024-01-01 01:00:00  X                 X                 X
+```
+(X = exceeds threshold, - = below threshold)
+
+👉 **See [INTERACTIVE_GUIDE.md](INTERACTIVE_GUIDE.md) for full details**
+
+## Command-Line Mode (Single File Analysis)
+
+### Quick Usage Examples
 
 ### Example 1: Analyze a single SSC item
 ```bash

@@ -23,6 +23,7 @@ A Python tool for analyzing DFS0 files (DHI MIKE format) with a focus on Suspend
   - One row per calendar day
   - Columns: Date | V1-V4 | IT1-IT7
   - Integer percentages (0-100)
+  - **Color Highlighting**: ORANGE for V columns >15, RED for IT columns >15 🎨
 - **Command-Line Output**: Results displayed immediately in terminal - no CSV required! ⭐
 - **Iterative Testing**: Try different scaling combinations without restarting ⭐
 - **Summary Statistics**: Quick exceedance percentages for easy comparison ⭐
@@ -31,6 +32,8 @@ A Python tool for analyzing DFS0 files (DHI MIKE format) with a focus on Suspend
 👉 **For the interactive analyzer, see [INTERACTIVE_GUIDE.md](INTERACTIVE_GUIDE.md)**
 
 👉 **For daily table format details, see [DAILY_TABLE_FORMAT.md](DAILY_TABLE_FORMAT.md)**
+
+👉 **For color highlighting rules, see [COLOR_HIGHLIGHTING.md](COLOR_HIGHLIGHTING.md)**
 
 ## Installation
 

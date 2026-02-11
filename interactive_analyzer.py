@@ -448,13 +448,14 @@ class InteractiveDFS0Analyzer:
             
             print("\n" + "="*100)
     
-    def save_tables_to_csv(self, tables: Dict[float, pd.DataFrame], output_dir: str = "."):
+    def save_tables_to_csv(self, tables: Dict[float, pd.DataFrame], output_dir: str = ".", daily_format: bool = False):
         """
         Save exceedance tables to CSV files.
         
         Args:
             tables: Dictionary mapping threshold to DataFrame
             output_dir: Directory to save CSV files
+            daily_format: If True, saves in daily format (no index), else saves with index
         """
         print("\n" + "="*70)
         print("Saving Tables to CSV...")
@@ -463,10 +464,15 @@ class InteractiveDFS0Analyzer:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         for threshold, df in tables.items():
-            filename = f"exceedance_table_{int(threshold)}mgl_{timestamp}.csv"
+            if daily_format:
+                filename = f"daily_exceedance_table_{int(threshold)}mgl_{timestamp}.csv"
+            else:
+                filename = f"exceedance_table_{int(threshold)}mgl_{timestamp}.csv"
             filepath = os.path.join(output_dir, filename)
             
-            df.to_csv(filepath)
+            # For daily format, don't save index (Date is already a column)
+            # For timestep format, save with index (timestamps)
+            df.to_csv(filepath, index=(not daily_format))
             print(f"✓ Saved: {filename}")
         
         print("="*70)
@@ -525,9 +531,11 @@ class InteractiveDFS0Analyzer:
                     print("RESULTS - Daily Exceedance Percentages")
                     print("="*70)
                     self.display_daily_tables(tables)
+                    is_daily_format = True
                 else:
                     # Generate tables (original format)
                     tables = self.generate_exceedance_tables()
+                    is_daily_format = False
                     
                     # Display tables (summary by default)
                     print("\n" + "="*70)
@@ -550,7 +558,7 @@ class InteractiveDFS0Analyzer:
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
                     
-                    self.save_tables_to_csv(tables, output_dir)
+                    self.save_tables_to_csv(tables, output_dir, daily_format=is_daily_format)
                 
                 # Ask if user wants to try different scaling factors
                 print("\n" + "="*70)

@@ -19,12 +19,18 @@ A Python tool for analyzing DFS0 files (DHI MIKE format) with a focus on Suspend
 - **Custom Scaling**: Apply individual scaling factors to each file (e.g., "1: 1.4")
 - **Multi-Receptor Tables**: Generate tables with dates vs receptors (columns from DFS0)
 - **Multiple Thresholds**: Automatic tables for 5mg/l, 10mg/l, and 25mg/l
+- **Daily Exceedance Tables**: NEW format showing % of each day exceeding threshold ⭐
+  - One row per calendar day
+  - Columns: Date | V1-V4 | IT1-IT7
+  - Integer percentages (0-100)
 - **Command-Line Output**: Results displayed immediately in terminal - no CSV required! ⭐
 - **Iterative Testing**: Try different scaling combinations without restarting ⭐
 - **Summary Statistics**: Quick exceedance percentages for easy comparison ⭐
 - **Optional CSV Export**: Save results only when you're satisfied
 
 👉 **For the interactive analyzer, see [INTERACTIVE_GUIDE.md](INTERACTIVE_GUIDE.md)**
+
+👉 **For daily table format details, see [DAILY_TABLE_FORMAT.md](DAILY_TABLE_FORMAT.md)**
 
 ## Installation
 

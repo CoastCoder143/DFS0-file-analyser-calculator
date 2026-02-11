@@ -38,6 +38,11 @@ class InteractiveDFS0Analyzer:
         self.column_order = ['Date', 'V1', 'V2', 'V3', 'V4', 
                             'IT1', 'IT2', 'IT3', 'IT4', 'IT5', 'IT6', 'IT7']
         
+        # ANSI color codes for terminal highlighting
+        self.ORANGE = '\033[33m'  # ANSI 33 for orange
+        self.RED = '\033[31m'     # ANSI 31 for red
+        self.RESET = '\033[0m'    # Reset color
+        
     def get_file_paths(self) -> List[str]:
         """
         Interactively get UNC file paths from the user.
@@ -404,9 +409,87 @@ class InteractiveDFS0Analyzer:
             
             print("\n" + "="*100)
     
+    def _format_colored_table(self, df: pd.DataFrame) -> str:
+        """
+        Format a DataFrame with colored values for terminal display.
+        
+        Args:
+            df: DataFrame with Date and percentage columns
+            
+        Returns:
+            Formatted string with ANSI color codes
+        """
+        # Build the output line by line
+        lines = []
+        
+        # Define column widths
+        date_width = 12
+        value_width = 10
+        
+        # Header row
+        header_parts = []
+        for col in df.columns:
+            if col == 'Date':
+                header_parts.append(f"{col:<{date_width}}")
+            else:
+                header_parts.append(f"{col:>{value_width}}")
+        lines.append("  ".join(header_parts))
+        
+        # Data rows
+        for _, row in df.iterrows():
+            row_parts = []
+            for col in df.columns:
+                value = row[col]
+                if col == 'Date':
+                    # Date column - no color
+                    row_parts.append(f"{value:<{date_width}}")
+                else:
+                    # Numeric column - apply color
+                    int_value = int(value)
+                    colored_str = self._apply_color_to_value(int_value, col)
+                    
+                    # Manually pad to account for ANSI codes
+                    # ANSI codes add characters but no visual width
+                    visible_len = len(f"{int_value:3d}")  # Visual length without ANSI codes
+                    padding_needed = value_width - visible_len
+                    padded_value = " " * padding_needed + colored_str
+                    row_parts.append(padded_value)
+            lines.append("  ".join(row_parts))
+        
+        return "\n".join(lines)
+    
+    def _apply_color_to_value(self, value: int, column_name: str) -> str:
+        """
+        Apply color to a numeric value based on column type and value.
+        
+        Args:
+            value: Numeric value
+            column_name: Column name to determine color rules
+            
+        Returns:
+            String with ANSI color codes if applicable
+        """
+        # Format the value
+        formatted = f"{value:3d}"
+        
+        # Determine if this is a V or IT column
+        is_v_column = column_name.startswith('V') and column_name[1:].isdigit()
+        is_it_column = column_name.startswith('IT') and column_name[2:].isdigit()
+        
+        # Apply coloring rules
+        if is_v_column and value > 15:
+            # V columns: >15 → ORANGE (including >20)
+            return f"{self.ORANGE}{formatted}{self.RESET}"
+        elif is_it_column and value > 15:
+            # IT columns: >15 → RED
+            return f"{self.RED}{formatted}{self.RESET}"
+        
+        # No color
+        return formatted
+    
     def display_daily_tables(self, tables: Dict[float, pd.DataFrame]):
         """
-        Display daily exceedance percentage tables.
+        Display daily exceedance percentage tables with color highlighting.
         
         Args:
             tables: Dictionary mapping threshold to DataFrame with daily percentages
@@ -420,19 +503,14 @@ class InteractiveDFS0Analyzer:
             
             # Display the full table
             if len(df) > 0:
-                # Show table with better formatting
-                pd.set_option('display.max_columns', None)
-                pd.set_option('display.width', None)
-                pd.set_option('display.max_colwidth', None)
-                
                 if len(df) > 20:
                     print("\nFirst 10 days:")
-                    print(df.head(10).to_string(index=False))
+                    print(self._format_colored_table(df.head(10)))
                     print(f"\n... ({len(df) - 20} days omitted) ...\n")
                     print("Last 10 days:")
-                    print(df.tail(10).to_string(index=False))
+                    print(self._format_colored_table(df.tail(10)))
                 else:
-                    print(df.to_string(index=False))
+                    print(self._format_colored_table(df))
                 
                 # Show summary statistics
                 print("\n" + "-"*100)

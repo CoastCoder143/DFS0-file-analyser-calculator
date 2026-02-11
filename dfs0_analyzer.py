@@ -46,7 +46,14 @@ class DFS0Analyzer:
         """
         if self.data is None:
             self.load_file()
-        return list(self.data.items.keys())
+        
+        # Handle both old and new mikeio API
+        if hasattr(self.data.items, 'keys'):
+            # Old API: items is a dict-like object
+            return list(self.data.items.keys())
+        else:
+            # New API: items is a list
+            return [item.name for item in self.data.items]
     
     def get_item_data(self, item_name: str) -> np.ndarray:
         """

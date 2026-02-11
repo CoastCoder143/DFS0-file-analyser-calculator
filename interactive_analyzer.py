@@ -244,12 +244,13 @@ class InteractiveDFS0Analyzer:
         print("✓ Tables generated successfully")
         return tables
     
-    def display_tables(self, tables: Dict[float, pd.DataFrame]):
+    def display_tables(self, tables: Dict[float, pd.DataFrame], show_full: bool = False):
         """
         Display the exceedance tables.
         
         Args:
             tables: Dictionary mapping threshold to DataFrame
+            show_full: If True, show full tables. If False, show summary only.
         """
         for threshold, df in tables.items():
             print("\n" + "="*100)
@@ -258,16 +259,30 @@ class InteractiveDFS0Analyzer:
             print("Legend: X = Exceeds threshold, - = Below threshold")
             print("-"*100)
             
-            # Display the table
-            # For large tables, show first and last few rows
-            if len(df) > 20:
-                print("\nFirst 10 rows:")
-                print(df.head(10).to_string())
-                print(f"\n... ({len(df) - 20} rows omitted) ...\n")
-                print("Last 10 rows:")
-                print(df.tail(10).to_string())
-            else:
-                print(df.to_string())
+            # Calculate and display summary statistics
+            exceedance_counts = (df == 'X').sum()
+            total_timesteps = len(df)
+            
+            print(f"\nSummary (Total timesteps: {total_timesteps}):")
+            print(f"{'Receptor':<40} {'Exceedances':<15} {'Percentage':<15}")
+            print("-"*70)
+            for receptor, count in exceedance_counts.items():
+                percentage = (count / total_timesteps) * 100
+                print(f"{receptor:<40} {count:<15} {percentage:>6.1f}%")
+            
+            if show_full:
+                print("\n" + "-"*100)
+                print("Full Table:")
+                # Display the table
+                # For large tables, show first and last few rows
+                if len(df) > 20:
+                    print("\nFirst 10 rows:")
+                    print(df.head(10).to_string())
+                    print(f"\n... ({len(df) - 20} rows omitted) ...\n")
+                    print("Last 10 rows:")
+                    print(df.tail(10).to_string())
+                else:
+                    print(df.to_string())
             
             print("\n" + "="*100)
     
@@ -309,33 +324,59 @@ class InteractiveDFS0Analyzer:
             # Step 2: Display files
             self.display_files(file_paths)
             
-            # Step 3: Get scaling factors
-            scaling_factors = self.get_scaling_factors(file_paths)
-            
-            # Step 4: Load files
-            self.load_files(file_paths, scaling_factors)
-            
-            if not self.analyzers:
-                print("\nError: No files were successfully loaded!")
-                return
-            
-            # Step 5: Generate tables
-            tables = self.generate_exceedance_tables()
-            
-            # Step 6: Display tables
-            self.display_tables(tables)
-            
-            # Step 7: Ask to save
-            save_option = input("\nSave tables to CSV files? (y/n): ").strip().lower()
-            if save_option == 'y':
-                output_dir = input("Enter output directory (or press Enter for current directory): ").strip()
-                if not output_dir:
-                    output_dir = "."
+            # Main analysis loop - allows trying different scaling factors
+            while True:
+                # Step 3: Get scaling factors
+                scaling_factors = self.get_scaling_factors(file_paths)
                 
-                if not os.path.exists(output_dir):
-                    os.makedirs(output_dir)
+                # Step 4: Load files with new scaling factors
+                self.load_files(file_paths, scaling_factors)
                 
-                self.save_tables_to_csv(tables, output_dir)
+                if not self.analyzers:
+                    print("\nError: No files were successfully loaded!")
+                    retry = input("Try again? (y/n): ").strip().lower()
+                    if retry != 'y':
+                        break
+                    continue
+                
+                # Step 5: Generate tables
+                tables = self.generate_exceedance_tables()
+                
+                # Step 6: Display tables (summary by default)
+                print("\n" + "="*70)
+                print("RESULTS - Exceedance Summary")
+                print("="*70)
+                self.display_tables(tables, show_full=False)
+                
+                # Ask if user wants to see full tables
+                show_full = input("\nShow full tables? (y/n): ").strip().lower()
+                if show_full == 'y':
+                    self.display_tables(tables, show_full=True)
+                
+                # Ask to save to CSV
+                save_option = input("\nSave tables to CSV files? (y/n): ").strip().lower()
+                if save_option == 'y':
+                    output_dir = input("Enter output directory (or press Enter for current directory): ").strip()
+                    if not output_dir:
+                        output_dir = "."
+                    
+                    if not os.path.exists(output_dir):
+                        os.makedirs(output_dir)
+                    
+                    self.save_tables_to_csv(tables, output_dir)
+                
+                # Ask if user wants to try different scaling factors
+                print("\n" + "="*70)
+                retry = input("Try different scaling factors? (y/n): ").strip().lower()
+                if retry != 'y':
+                    break
+                
+                # Clear previous data for next iteration
+                self.files_data = []
+                self.analyzers = []
+                print("\n" + "="*70)
+                print("Starting new analysis with same files...")
+                print("="*70)
             
             print("\n" + "#"*70)
             print("#" + "  Analysis Complete!".center(68) + "#")

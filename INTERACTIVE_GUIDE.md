@@ -10,8 +10,10 @@ The Interactive DFS0 Analyzer is a tool for analyzing multiple DFS0 files with d
 - **Custom Scaling Factors**: Apply individual scaling factors to each file
 - **Multi-Receptor Analysis**: Each column in the DFS0 file is treated as a separate receptor
 - **Threshold Exceedance Tables**: Generates separate tables for 5mg/l, 10mg/l, and 25mg/l
-- **Date-Based Output**: Shows which dates/times each receptor exceeds thresholds
-- **CSV Export**: Save results to CSV files for further analysis
+- **Command-Line Output**: Results displayed immediately in terminal (no CSV required)
+- **Summary Statistics**: Quick overview of exceedance percentages per receptor
+- **Try Multiple Combinations**: Test different scaling factors without restarting
+- **Optional CSV Export**: Save results to CSV files if needed
 
 ## Installation
 
@@ -96,39 +98,95 @@ Enter scaling (or 'done'/'list'): done
 - Type `done` when finished
 - Press Enter without input to set all remaining files to 1.0
 
-#### Step 4: Analysis
+#### Step 4: View Results
 
 The tool will:
 1. Load all DFS0 files
 2. Apply scaling factors
 3. Generate exceedance tables for each threshold (5, 10, 25 mg/l)
-4. Display the tables
+4. **Display summary statistics on the command line** (NEW!)
 
-#### Step 5: Save Results
-
-You'll be asked if you want to save the tables:
+**Summary Output Example:**
 
 ```
-Save tables to CSV files? (y/n): y
-Enter output directory (or press Enter for current directory): ./results
+====================================================================================================
+EXCEEDANCE TABLE: Threshold = 5.0 mg/l
+====================================================================================================
+Legend: X = Exceeds threshold, - = Below threshold
+----------------------------------------------------------------------------------------------------
 
-✓ Saved: exceedance_table_5mgl_20240101_120000.csv
-✓ Saved: exceedance_table_10mgl_20240101_120000.csv
-✓ Saved: exceedance_table_25mgl_20240101_120000.csv
+Summary (Total timesteps: 1440):
+Receptor                                 Exceedances     Percentage     
+----------------------------------------------------------------------
+File1_Receptor_1                         523               36.3%
+File1_Receptor_2                         892               62.0%
+File2_Receptor_1                         678               47.1%
+File2_Receptor_2                         1104              76.7%
+
+====================================================================================================
 ```
+
+This summary view is **perfect for quickly comparing different scaling factor combinations!**
+
+#### Step 5: Optional Full Tables
+
+You can optionally view the full tables with all timesteps:
+
+```
+Show full tables? (y/n): y
+```
+
+If you select 'y', you'll see the detailed table with X/- markers for each timestep.
+
+#### Step 6: Optional CSV Export
+
+You can optionally save the tables to CSV files:
+
+```
+Save tables to CSV files? (y/n): n
+```
+
+**You can skip this if you're just testing different combinations!**
+
+#### Step 7: Try Different Combinations (NEW!)
+
+After viewing results, you can try different scaling factors:
+
+```
+Try different scaling factors? (y/n): y
+```
+
+This lets you:
+- Keep the same files loaded
+- Enter new scaling factors
+- See new results immediately
+- Compare results in your terminal history
+- Find the optimal combination without restarting
 
 ## Output Format
 
-### Table Structure
+### Summary Statistics (Default View)
 
-Each table shows:
+By default, you'll see a summary table for each threshold showing:
+- **Receptor name**: Format `File<N>_<ReceptorName>`
+- **Exceedances**: Number of timesteps exceeding the threshold
+- **Percentage**: Percentage of total timesteps exceeding the threshold
+
+This format is perfect for:
+- Quick comparison of different scaling factors
+- Identifying which receptors are most affected
+- Finding optimal scaling combinations
+
+### Full Table (Optional)
+
+Each full table shows:
 - **Rows**: Date/Time stamps from the DFS0 files
 - **Columns**: Receptors from all files (format: `File<N>_<ReceptorName>`)
 - **Values**: 
   - `X` = Concentration exceeds threshold at this time
   - `-` = Concentration below threshold at this time
 
-### Example Table (5mg/l threshold)
+### Example Full Table (5mg/l threshold)
 
 ```
 Date/Time            File1_Receptor_1  File1_Receptor_2  File2_Receptor_1
@@ -137,14 +195,55 @@ Date/Time            File1_Receptor_1  File1_Receptor_2  File2_Receptor_1
 2024-01-01 02:00:00  -                 X                 X
 ```
 
-### CSV Files
+### CSV Files (Optional)
 
-Three CSV files are generated, one for each threshold:
+If you choose to save, three CSV files are generated, one for each threshold:
 - `exceedance_table_5mgl_<timestamp>.csv` - 5 mg/l threshold
 - `exceedance_table_10mgl_<timestamp>.csv` - 10 mg/l threshold  
 - `exceedance_table_25mgl_<timestamp>.csv` - 25 mg/l threshold
 
 The CSV files can be opened in Excel, imported into databases, or used for further analysis.
+
+## Testing Different Scaling Combinations (NEW!)
+
+One of the most powerful features is the ability to quickly test different scaling factor combinations:
+
+### Workflow for Finding Optimal Scaling
+
+1. **Enter files once** - Load all your DFS0 files
+2. **Try first combination** - Start with initial scaling factors (e.g., all 1.0)
+3. **View summary results** - See exceedance percentages immediately
+4. **Decide to adjust** - Notice which receptors need adjustment
+5. **Try new combination** - Enter different scaling factors (e.g., 1: 1.4, 2: 0.8)
+6. **Compare results** - See new percentages, compare mentally or scroll up in terminal
+7. **Iterate** - Keep trying until you find optimal combination
+8. **Save final result** - Only save CSV when you're satisfied
+
+### Example Iteration Session
+
+```
+First try: All scaling = 1.0
+  File1_Receptor_1: 523 exceedances (36.3%)
+  File2_Receptor_1: 892 exceedances (62.0%)
+
+Second try: File1 = 1.4, File2 = 1.0
+  File1_Receptor_1: 678 exceedances (47.1%)  ← Increased as expected
+  File2_Receptor_1: 892 exceedances (62.0%)  ← Unchanged
+
+Third try: File1 = 1.4, File2 = 0.8
+  File1_Receptor_1: 678 exceedances (47.1%)  ← Unchanged
+  File2_Receptor_1: 734 exceedances (51.0%)  ← Decreased as expected
+
+Found optimal combination!
+```
+
+### Tips for Quick Comparison
+
+- **Use terminal scroll** - Scroll up to see previous results
+- **Take notes** - Write down interesting combinations
+- **Focus on summary** - The percentage column is your key metric
+- **Skip full tables** - Only view full tables when you need details
+- **Skip CSV save** - Save only when you've found the best combination
 
 ## Example Session
 
